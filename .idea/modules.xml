@@ -2,10 +2,10 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/EventDebugger.iml" filepath="$PROJECT_DIR$/.idea/modules/EventDebugger.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/EventDebugger-build.iml" filepath="$PROJECT_DIR$/.idea/modules/EventDebugger-build.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ScalaExamplePlugin.iml" filepath="$PROJECT_DIR$/.idea/modules/ScalaExamplePlugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ScalaExamplePlugin-build.iml" filepath="$PROJECT_DIR$/.idea/modules/ScalaExamplePlugin-build.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ScalaPluginExample.ScalaExamplePlugin.iml" filepath="$PROJECT_DIR$/.idea/modules/ScalaPluginExample.ScalaExamplePlugin.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/project.ScalaExamplePlugin-build.iml" filepath="$PROJECT_DIR$/.idea/modules/project.ScalaExamplePlugin-build.iml" />
     </modules>
   </component>
 </project>

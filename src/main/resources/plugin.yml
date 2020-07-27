@@ -1,4 +1,5 @@
-name: ScalaExamplePlugin
-main: me.jantuck.scalaexampleplugin.ScalaExamplePlugin
+name: EventDebugger
+main: me.jantuck.eventdebugger.EventDebugger
 version: "0.1"
 author: JanTuck
+api-version: "1.13"

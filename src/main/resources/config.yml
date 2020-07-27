@@ -1,0 +1,8 @@
+PickupEvent:
+  class: "org.bukkit.event.entity.EntityPickupItemEvent" # Use the proper class
+  methods: # Only getters without parameters
+    - "isCancelled"
+InteractEvent:
+  class: "org.bukkit.event.player.PlayerInteractEvent"
+  methods:
+    - "isCancelled"

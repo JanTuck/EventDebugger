@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id="scalapluginexample [file:/E:/Git%20Projects/Personal/ScalaPluginExample/]" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="SBT" type="JAVA_MODULE" version="4">
+<module external.linked.project.id="eventdebugger_ [file:/E:/git/EventDebugger_/]" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="SBT" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="minecraft" name="Minecraft">
       <configuration>
@@ -20,8 +20,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="sbt: co.aikar:acf-paper:0.5.0-SNAPSHOT:jar" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="sbt: com.destroystokyo.paper:paper-api:1.16.1-R0.1-SNAPSHOT:jar" level="project" />
+    <orderEntry type="library" name="sbt: com.esotericsoftware:reflectasm:1.11.9:jar" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="sbt: com.google.code.findbugs:jsr305:1.3.9:jar" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="sbt: com.google.code.gson:gson:2.8.0:jar" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="sbt: com.google.guava:guava:21.0:jar" level="project" />
