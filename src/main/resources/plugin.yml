@@ -1,0 +1,4 @@
+name: ScalaExamplePlugin
+main: me.jantuck.scalaexampleplugin.ScalaExamplePlugin
+version: "0.1"
+author: JanTuck
