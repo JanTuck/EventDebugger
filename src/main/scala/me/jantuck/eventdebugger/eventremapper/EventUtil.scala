@@ -48,7 +48,7 @@ object EventUtil {
     )
   }
 
-  private def subscribeToMethods(clazz: Class[_ <: Event], methods: List[String]): Unit ={
+  private def subscribeToMethods(clazz: Class[_ <: Event], methods: List[String]): Unit = {
     val methodAccess = MethodAccess.get(clazz)
     eventAccess(clazz) = methodAccess // Cached
     methods.foreach(method => {
@@ -83,8 +83,8 @@ object EventUtil {
     val logger = event._2.getPlugin.getLogger
     before.foreach(entry => {
       val newValue = after(entry._1)
-      if (newValue != entry._2){
-        if (first){
+      if (newValue != entry._2) {
+        if (first) {
           logger.info("Event Debugger START")
           logger.info("Logger hijacked by Event Debugger // Ignore")
           logger.info(s"-> Change detected in event '${event._1.getEventName}'")
@@ -94,7 +94,7 @@ object EventUtil {
         logger.info(s"-> Detected change in '${entry._1._1}' from '${entry._2}' -> '$newValue'")
       }
     })
-    if (!first){
+    if (!first) {
       logger.info("Event Debugger END")
     }
   }
