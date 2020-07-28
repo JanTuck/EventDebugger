@@ -9,7 +9,7 @@ import org.bukkit.plugin.java.JavaPlugin
 import scala.jdk.CollectionConverters.{CollectionHasAsScala, MapHasAsScala}
 
 
-class EventDebugger extends JavaPlugin with Listener {
+class EventDebugger extends JavaPlugin {
   override def onEnable() {
     saveDefaultConfig()
     val map = ArrayListMultimap.create[Class[_ <: Event], String]()
@@ -19,11 +19,6 @@ class EventDebugger extends JavaPlugin with Listener {
       map.putAll(clazz, section.getStringList("methods"))
     })
     getServer.getScheduler.runTask(this, _ => map.asMap.asScala.foreach(entry => EventUtil.remapAndListen(entry._1, entry._2.asScala.toList)))
-    getServer.getPluginManager.registerEvents(this, this)
   }
 
-  @EventHandler
-  def playerInteract(interact: PlayerInteractEvent): Unit ={
-    interact.setCancelled(true)
-  }
 }

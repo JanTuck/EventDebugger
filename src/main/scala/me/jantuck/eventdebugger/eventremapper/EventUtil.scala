@@ -41,6 +41,9 @@ object EventUtil {
         Cache method access and stuff.
        */
       subscribeToMethods(clazz, subscribed)
+
+      // Notify user of remapping.
+      listener.getPlugin.getLogger.info(s"EventDebugger -> Remapped listener for event '${clazz.getSimpleName}'")
     }
     )
   }
