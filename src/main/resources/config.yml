@@ -1,0 +1,17 @@
+other:
+  listen-to-all-cancellable: false # Off by default since this might provide too much information for simple tasks
+  cancellable-namespaces:
+    - "org.bukkit" # Contains all default events, got a plugin with events? Add their namespace.
+  ignore-cancellable: # This will only work if above is set to true
+    - "org.bukkit.event.player.AsyncPlayerChatEvent" # Example
+    - "org.bukkit.event.player.PlayerInteractEvent" # Example
+    - "org.bukkit.event.entity.EntityPickupItemEvent" # Example
+exact:
+  PickupEvent:
+    class: "org.bukkit.event.entity.EntityPickupItemEvent" # Use the proper class
+    methods: # Only getters without parameters
+      - "isCancelled"
+  InteractEvent:
+    class: "org.bukkit.event.player.PlayerInteractEvent"
+    methods:
+      - "isCancelled"

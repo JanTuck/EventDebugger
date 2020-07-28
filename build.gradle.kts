@@ -11,14 +11,14 @@ version = "1.0-SNAPSHOT"
 repositories {
     mavenCentral()
     maven(url = "https://papermc.io/repo/repository/maven-public/")
-    maven(url = "https://repo.aikar.co/content/groups/aikar/")
     maven(url = "https://nexus.okkero.com/repository/maven-releases/")
 }
 
 dependencies {
     implementation(kotlin("stdlib"))
-    implementation("co.aikar", "acf-paper", "0.5.0-SNAPSHOT")
     implementation("com.okkero.skedule", "skedule", "1.2.6")
+    implementation("com.esotericsoftware", "reflectasm", "1.11.9")
+    implementation("org.reflections", "reflections", "0.9.10")
     compileOnly("com.destroystokyo.paper", "paper-api", "1.16.1-R0.1-SNAPSHOT")
 }
 spigot {
@@ -36,10 +36,18 @@ tasks {
     withType<ShadowJar> {
         archiveClassifier.set("")
         val packageName = "${project.group}.${project.name.toLowerCase()}"
-        relocate("co.aikar.commands", "$packageName.shaded.acf")
-        relocate("co.aikar.locales", "$packageName.shaded.locales")
         relocate( "kotlin" , "$packageName.shaded.kotlin")
-        relocate( "com.okkero.skedule" , "$packageName.shaded.skedule")
-        minimize()
+        relocate( "com.okkero" , "$packageName.shaded.com.okkero")
+        relocate( "com.google.common" , "$packageName.shaded.google.common")
+        relocate( "com.esotericsoftware" , "$packageName.shaded.com.esotericsoftware")
+        relocate( "com.okkero" , "$packageName.shaded.com.okkero")
+        relocate( "org.reflections" , "$packageName.shaded.org.reflections") // org.reflections, org.jetbrainsjetbrains, and org.intellij
+        relocate( "org.jetbrains" , "$packageName.shaded.org.jetbrains")
+        relocate( "org.intellij" , "$packageName.shaded.org.intellij")
+        relocate( "net.jcip.annotations" , "$packageName.shaded.net.jcip.annotations") // net.jcip.annotations
+        relocate( "javax.annotation" , "$packageName.shaded.javax.annotation") // javax.annotation
+        relocate( "javassist" , "$packageName.shaded.javassist")
+        relocate( "edu.umd.cs.findbugs.annotions" , "$packageName.shaded.edu.umd.cs.findbugs.annotions") // edu.umd.cs.findbugs.annotions
+        minimize() // Remove unused shit
     }
 }
