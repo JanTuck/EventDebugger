@@ -2,10 +2,13 @@ package me.jantuck.eventdebugger
 
 import com.esotericsoftware.reflectasm.MethodAccess
 import com.google.common.collect.ArrayListMultimap
+import com.google.gson.Gson
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
+import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.EventExecutor
 import org.bukkit.plugin.RegisteredListener
+import java.lang.Exception
 
 object EventRemapper {
     /*
@@ -26,6 +29,7 @@ object EventRemapper {
             }
             executorField.set(it, newExecutor)
             EventDebugger.logger.info("-> Listener for '${clazz.simpleName}' from '${it.plugin.name}' remapped.")
+            EventDebugger.logger.info("--> Subscribed to (${subscribed.joinToString(", ")})")
         }
         // Cache values
         val methodAccess = MethodAccess.get(clazz)
@@ -43,15 +47,19 @@ object EventRemapper {
         val newValues = returnCurrentValues(event)
         val differences = returnDifferences(oldValues, newValues)
         val logger = EventDebugger.logger
-        logger.info("EventDebugger START")
-        logger.info("-> Change in event '${event.eventName}'")
-        logger.info("-> Caused by '${registeredListener.plugin.name}'")
-        differences.forEach { (t, u) -> logger.info("-> '$t' changed from '${u.first}' to '${u.second}") }
-        logger.info("EventDebugger END")
+        if (differences.isNotEmpty()) {
+            logger.info("EventDebugger START")
+            logger.info("-> Change in event '${event.eventName}'")
+            logger.info("-> Caused by '${registeredListener.plugin.name}'")
+            differences.forEach { (t, u) -> logger.info("-> '$t' changed from '${u.first}' to '${u.second}") }
+            logger.info("EventDebugger END")
+        }
     }
 
     private fun returnCurrentValues(event: Event) : Map<String, Any> =
-        subscribedMethodForEvent.get(event.javaClass).map { it.first to it.third.invoke(event, it.second) }.toMap()
+        subscribedMethodForEvent.get(event.javaClass).map { it.first to it.third.invoke(event, it.second).let { any->
+            (any as? ItemStack)?.clone() ?: any
+        }}.toMap()
 
     private fun returnDifferences(before: Map<String, Any>, after: Map<String, Any>) : Map<String, Pair<Any, Any?>> =
         before

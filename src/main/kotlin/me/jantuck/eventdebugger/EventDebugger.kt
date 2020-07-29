@@ -27,7 +27,7 @@ class EventDebugger : JavaPlugin() {
         val section = config.getConfigurationSection("exact") ?: return
         section.getKeys(false).forEach {
             val clazz = Class.forName(section.getString("$it.class"))
-            val methods = section.getStringList("methods")
+            val methods = section.getStringList("$it.methods")
             EventRemapper.remapAndSubscribe(clazz as Class<out Event>, methods)
         }
     }
