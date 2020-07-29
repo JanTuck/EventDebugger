@@ -52,7 +52,7 @@ object EventRemapper {
             logger.info("EventDebugger START")
             logger.info("-> Change in event '${event.eventName}'")
             logger.info("-> Caused by '${registeredListener.plugin.name}'")
-            differences.forEach { (t, u) -> logger.info("-> '$t' changed from '${u.first}' to '${u.second}") }
+            differences.forEach { (t, u) -> logger.info("-> '$t' changed from '${u.first}' to '${u.second}'") }
             logger.info("EventDebugger END")
         }
     }
