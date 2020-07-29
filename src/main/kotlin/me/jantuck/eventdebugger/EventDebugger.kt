@@ -1,4 +1,3 @@
-
 package me.jantuck.eventdebugger
 
 import com.okkero.skedule.schedule
@@ -14,6 +13,7 @@ class EventDebugger : JavaPlugin() {
     companion object {
         val logger: Logger = LoggerFactory.getLogger("EventDebugger")
     }
+
     override fun onEnable() {
         saveDefaultConfig()
         this.schedule {
@@ -23,7 +23,7 @@ class EventDebugger : JavaPlugin() {
         }
     }
 
-    private fun remapExactSubscriptions(){
+    private fun remapExactSubscriptions() {
         val section = config.getConfigurationSection("exact") ?: return
         section.getKeys(false).forEach {
             val clazz = Class.forName(section.getString("$it.class"))
@@ -32,19 +32,19 @@ class EventDebugger : JavaPlugin() {
         }
     }
 
-    private fun tryRemapAllCancellable(){
+    private fun tryRemapAllCancellable() {
         val section = config.getConfigurationSection("other") ?: return
-        if (!section.getBoolean("listen-to-all-cancellable",false)) return
+        if (!section.getBoolean("listen-to-all-cancellable", false)) return
         Reflections.log = EventDebugger.logger // Prefer own logger, so it looks nicer.
         val nameSpaces = section.getStringList("cancellable-namespaces")
         val ignored = section.getStringList("ignore-cancellable")
         val isCancelledMethod = listOf("isCancelled")
-        nameSpaces.forEach {namespace ->
+        nameSpaces.forEach { namespace ->
             val reflections = Reflections(namespace)
             reflections
                 .getSubTypesOf(Cancellable::class.java)
                 .filter {
-                            it.declaredFields.any { field -> field.type.name.endsWith("HandlerList") }
+                    it.declaredFields.any { field -> field.type.name.endsWith("HandlerList") }
                             && !ignored.contains(it.name)
                 }
                 .forEach {

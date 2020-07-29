@@ -2,30 +2,30 @@ package me.jantuck.eventdebugger
 
 import com.esotericsoftware.reflectasm.MethodAccess
 import com.google.common.collect.ArrayListMultimap
-import com.google.gson.Gson
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
 import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.EventExecutor
 import org.bukkit.plugin.RegisteredListener
-import java.lang.Exception
 
 object EventRemapper {
     /*
     Executor field from RegisteredListener class, uses this to apply our executor on "top" of the normal one.
      */
-    private val executorField = RegisteredListener::class.java.getDeclaredField("executor").apply { this.isAccessible = true }
+    private val executorField =
+        RegisteredListener::class.java.getDeclaredField("executor").apply { this.isAccessible = true }
 
     // Our cache to hold our methodaccess, index of method and method name.
-    private val subscribedMethodForEvent = ArrayListMultimap.create<Class<out Event>, Triple<String, Int, MethodAccess>>()
+    private val subscribedMethodForEvent =
+        ArrayListMultimap.create<Class<out Event>, Triple<String, Int, MethodAccess>>()
 
-    fun remapAndSubscribe(clazz: Class<out Event>, subscribed: List<String>){
+    fun remapAndSubscribe(clazz: Class<out Event>, subscribed: List<String>) {
         val handlerList = clazz.getDeclaredMethod("getHandlerList").invoke(null) as HandlerList
         val listeners = handlerList.registeredListeners
         listeners.forEach {
             val oldExecutor = executorField.get(it) as EventExecutor
-            val newExecutor =  EventExecutor { listener1, event1 ->
-                executeAndCheckChanges({event -> oldExecutor.execute(listener1, event)}, event1, it)
+            val newExecutor = EventExecutor { listener1, event1 ->
+                executeAndCheckChanges({ event -> oldExecutor.execute(listener1, event) }, event1, it)
             }
             executorField.set(it, newExecutor)
             EventDebugger.logger.info("-> Listener for '${clazz.simpleName}' from '${it.plugin.name}' remapped.")
@@ -41,7 +41,8 @@ object EventRemapper {
     private inline fun executeAndCheckChanges(
         executionMethod: (Event) -> Unit,
         event: Event,
-        registeredListener: RegisteredListener){
+        registeredListener: RegisteredListener
+    ) {
         val oldValues = returnCurrentValues(event)
         executionMethod.invoke(event)
         val newValues = returnCurrentValues(event)
@@ -56,14 +57,16 @@ object EventRemapper {
         }
     }
 
-    private fun returnCurrentValues(event: Event) : Map<String, Any> =
-        subscribedMethodForEvent.get(event.javaClass).map { it.first to it.third.invoke(event, it.second).let { any->
-            (any as? ItemStack)?.clone() ?: any
-        }}.toMap()
+    private fun returnCurrentValues(event: Event): Map<String, Any> =
+        subscribedMethodForEvent.get(event.javaClass).map {
+            it.first to it.third.invoke(event, it.second).let { any ->
+                (any as? ItemStack)?.clone() ?: any
+            }
+        }.toMap()
 
-    private fun returnDifferences(before: Map<String, Any>, after: Map<String, Any>) : Map<String, Pair<Any, Any?>> =
+    private fun returnDifferences(before: Map<String, Any>, after: Map<String, Any>): Map<String, Pair<Any, Any?>> =
         before
             .filter { after[it.key] != it.value }
-            .map { it.key to (it.value to after[it.key])}
+            .map { it.key to (it.value to after[it.key]) }
             .toMap()
 }
