@@ -4,15 +4,10 @@ import com.esotericsoftware.reflectasm.MethodAccess
 import com.google.common.collect.ArrayListMultimap
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
-import org.bukkit.event.player.PlayerInteractEntityEvent
 import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.EventExecutor
 import org.bukkit.plugin.RegisteredListener
-import java.lang.invoke.MethodHandle
-import java.lang.invoke.MethodHandles
-import java.lang.invoke.MethodType
 import java.lang.reflect.Method
-import java.util.logging.Handler
 
 object EventRemapper {
     /*
@@ -26,12 +21,13 @@ object EventRemapper {
         ArrayListMultimap.create<Class<out Event>, Triple<String, Int, MethodAccess>>()
 
 
-    private fun getHandlerListStaticMethod(clazz: Class<*>) : Method? = clazz.declaredMethods.find { it.name == "getHandlerList" && it.returnType == HandlerList::class.java /* Unnecessary check?*/}
+    private fun getHandlerListStaticMethod(clazz: Class<*>): Method? =
+        clazz.declaredMethods.find { it.name == "getHandlerList" && it.returnType == HandlerList::class.java /* Unnecessary check?*/ }
 
     /**
      * Traverses to try and find the HandlerList of an event.
      */
-    private fun tryGetHandlerList(clazz: Class<out Event>) : HandlerList?{
+    private fun tryGetHandlerList(clazz: Class<out Event>): HandlerList? {
         val handlerListMethod = getHandlerListStaticMethod(clazz)
         if (handlerListMethod != null) return handlerListMethod.invoke(null) as HandlerList
 
@@ -54,7 +50,8 @@ object EventRemapper {
      * Remaps shit
      */
     fun remapAndSubscribe(clazz: Class<out Event>, subscribed: List<String>) {
-        val handlerList = tryGetHandlerList(clazz) ?: throw RuntimeException("Could not be find HandlerList of ${clazz.simpleName}")
+        val handlerList =
+            tryGetHandlerList(clazz) ?: throw RuntimeException("Could not be find HandlerList of ${clazz.simpleName}")
         val listeners = handlerList.registeredListeners
         listeners.forEach {
             val oldExecutor = executorField.get(it) as EventExecutor
@@ -95,13 +92,13 @@ object EventRemapper {
     }
 
 
-
-    private val cachedMethodAccess = mutableMapOf<Class<*>, Pair<Int, MethodAccess>>() // Caches index, and methodaccess for further use.
+    private val cachedMethodAccess =
+        mutableMapOf<Class<*>, Pair<Int, MethodAccess>>() // Caches index, and methodaccess for further use.
 
     /**
      * Tries and cloning an object via the .clone method on the object (any)
      */
-    private fun tryCloneAny(any: Any?) : Any? {
+    private fun tryCloneAny(any: Any?): Any? {
         if (any !is Cloneable) return any // Assuming it can't be cloned if they don't implement this interface.
         if (any is ItemStack) return any.clone() // Quick lookup, instead of using MethodAccess this should be fine.
         val anyClass = any::class.java
@@ -112,7 +109,7 @@ object EventRemapper {
             val index = lookup.getIndex("clone")
             cachedMethodAccess[anyClass] = index to lookup
             lookup.invoke(any, index)
-        } catch (e: Exception){
+        } catch (e: Exception) {
             any // Unable to invoke or find the method, return any. (Note, that other issues might occur and catching exception seems quite... meh)
         }
     }
