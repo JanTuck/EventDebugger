@@ -23,6 +23,9 @@ class EventDebugger : JavaPlugin() {
         }
     }
 
+    /**
+     * Tries to remap all the things listed in config
+     */
     private fun remapExactSubscriptions() {
         val section = config.getConfigurationSection("exact") ?: return
         section.getKeys(false).forEach {
@@ -32,6 +35,9 @@ class EventDebugger : JavaPlugin() {
         }
     }
 
+    /**
+     * Tries to remap all events implementing Cancellable
+     */
     private fun tryRemapAllCancellable() {
         val section = config.getConfigurationSection("other") ?: return
         if (!section.getBoolean("listen-to-all-cancellable", false)) return
