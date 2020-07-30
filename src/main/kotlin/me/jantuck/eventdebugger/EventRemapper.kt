@@ -51,7 +51,7 @@ object EventRemapper {
      */
     fun remapAndSubscribe(clazz: Class<out Event>, subscribed: List<String>) {
         val handlerList =
-            tryGetHandlerList(clazz) ?: throw RuntimeException("Could not be find HandlerList of ${clazz.simpleName}")
+            tryGetHandlerList(clazz) ?: throw RuntimeException("Could not find HandlerList of ${clazz.simpleName}")
         val listeners = handlerList.registeredListeners
         listeners.forEach {
             val oldExecutor = executorField.get(it) as EventExecutor
