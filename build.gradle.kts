@@ -1,4 +1,5 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import com.github.jengelman.gradle.plugins.shadow.tasks.ConfigureShadowRelocation
 plugins {
     kotlin("jvm") version "1.3.72"
     id("kr.entree.spigradle") version "1.2.4"
@@ -10,7 +11,8 @@ version = "1.1-SNAPSHOT"
 
 repositories {
     mavenCentral()
-    maven(url = "https://papermc.io/repo/repository/maven-public/")
+    maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
+    maven("https://oss.sonatype.org/content/repositories/snapshots")
     maven(url = "https://nexus.okkero.com/repository/maven-releases/")
 }
 
@@ -18,12 +20,19 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation("com.okkero.skedule", "skedule", "1.2.6")
     implementation("com.esotericsoftware", "reflectasm", "1.11.9")
-    implementation("org.reflections", "reflections", "0.9.10")
-    compileOnly("com.destroystokyo.paper", "paper-api", "1.16.1-R0.1-SNAPSHOT")
+    implementation("org.slf4j", "slf4j-api",  "1.7.30")
+    implementation("org.slf4j", "slf4j-simple",  "1.7.30")
+    implementation("org.reflections", "reflections", "0.9.12")
+    compileOnly("org.spigotmc:spigot-api:1.16.1-R0.1-SNAPSHOT")
 }
 spigot {
     authors = listOf("JanTuck")
     apiVersion = "1.13"
+}
+val autoRelocate by tasks.register<ConfigureShadowRelocation>("configureShadowRelocation", ConfigureShadowRelocation::class) {
+    target = tasks.getByName("shadowJar") as ShadowJar?
+    val packageName = "${project.group}.${project.name.toLowerCase()}"
+    prefix = "$packageName.shaded"
 }
 
 tasks {
@@ -35,19 +44,7 @@ tasks {
     }
     withType<ShadowJar> {
         archiveClassifier.set("")
-        val packageName = "${project.group}.${project.name.toLowerCase()}"
-        relocate( "kotlin" , "$packageName.shaded.kotlin")
-        relocate( "com.okkero" , "$packageName.shaded.com.okkero")
-        relocate( "com.google.common" , "$packageName.shaded.google.common")
-        relocate( "com.esotericsoftware" , "$packageName.shaded.com.esotericsoftware")
-        relocate( "com.okkero" , "$packageName.shaded.com.okkero")
-        relocate( "org.reflections" , "$packageName.shaded.org.reflections") // org.reflections, org.jetbrainsjetbrains, and org.intellij
-        relocate( "org.jetbrains" , "$packageName.shaded.org.jetbrains")
-        relocate( "org.intellij" , "$packageName.shaded.org.intellij")
-        relocate( "net.jcip.annotations" , "$packageName.shaded.net.jcip.annotations") // net.jcip.annotations
-        relocate( "javax.annotation" , "$packageName.shaded.javax.annotation") // javax.annotation
-        relocate( "javassist" , "$packageName.shaded.javassist")
-        relocate( "edu.umd.cs.findbugs.annotions" , "$packageName.shaded.edu.umd.cs.findbugs.annotions") // edu.umd.cs.findbugs.annotions
-        minimize() // Remove unused shit
+        dependsOn(autoRelocate)
+        minimize()
     }
 }
