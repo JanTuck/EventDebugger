@@ -51,8 +51,8 @@ object EventRemapper {
      * Remaps shit
      */
     fun remapAndSubscribe(clazz: Class<out Event>, subscribed: List<String>) {
-        Preconditions.checkArgument(subscribed.contains("callEvent"),
-            "You are not allowed to listen on 'callEvent' since that will cause an stackoverflow error.")
+        if (subscribed.any { it.equals("callevent", true) }) // Meh
+            throw java.lang.RuntimeException("You are not allowed to subscribe to method callEvent")
         val handlerList =
             tryGetHandlerList(clazz) ?: throw RuntimeException("Could not find HandlerList of ${clazz.simpleName}")
         val listeners = handlerList.registeredListeners
