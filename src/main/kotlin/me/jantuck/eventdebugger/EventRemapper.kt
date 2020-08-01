@@ -62,8 +62,9 @@ object EventRemapper {
                 executeAndCheckChanges({ event -> oldExecutor.execute(listener1, event) }, event1, it)
             }
             executorField.set(it, newExecutor)
-            EventDebugger.logger.info("-> Listener for '${clazz.simpleName}' from '${it.plugin.name}' remapped.")
-            EventDebugger.logger.info("--> Subscribed to (${subscribed.joinToString(", ")})")
+            EventDebugger.logger.info("> Listener for '${clazz.simpleName}' from '${it.plugin.name}' remapped.")
+            EventDebugger.logger.info("-> Subscribed to (${subscribed.joinToString(", ")})")
+            EventDebugger.logger.info("--> Event priority '${it.priority}'")
         }
         // Cache MethodAccess and index for subscribed methods, of course also cache the method name.
         val methodAccess = MethodAccess.get(clazz)
