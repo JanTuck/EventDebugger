@@ -1,6 +1,7 @@
 package me.jantuck.eventdebugger
 
 import com.esotericsoftware.reflectasm.MethodAccess
+import com.google.common.base.Preconditions
 import com.google.common.collect.ArrayListMultimap
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
@@ -50,6 +51,8 @@ object EventRemapper {
      * Remaps shit
      */
     fun remapAndSubscribe(clazz: Class<out Event>, subscribed: List<String>) {
+        Preconditions.checkArgument(subscribed.contains("callEvent"),
+            "You are not allowed to listen on 'callEvent' since that will cause an stackoverflow error.")
         val handlerList =
             tryGetHandlerList(clazz) ?: throw RuntimeException("Could not find HandlerList of ${clazz.simpleName}")
         val listeners = handlerList.registeredListeners
@@ -116,9 +119,7 @@ object EventRemapper {
 
     private fun returnCurrentValues(event: Event): Map<String, Any?> =
         subscribedMethodForEvent.get(event.javaClass).map {
-            it.first to it.third.invoke(event, it.second).let { any ->
-                tryCloneAny(any) // Clone it so we can preserve the value/values, hopefully.
-            }
+            it.first to it.third.invoke(event, it.second)?.let{any -> tryCloneAny(any)}
         }.toMap()
 
     private fun returnDifferences(before: Map<String, Any?>, after: Map<String, Any?>): Map<String, Pair<Any?, Any?>> =
