@@ -8,7 +8,6 @@ import org.bukkit.plugin.java.JavaPlugin
 import org.reflections.Reflections
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import kotlin.math.log
 
 @Suppress("UNCHECKED_CAST")
 class EventDebugger : JavaPlugin() {

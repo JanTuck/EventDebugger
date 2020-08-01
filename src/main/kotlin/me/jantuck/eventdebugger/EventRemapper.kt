@@ -1,7 +1,6 @@
 package me.jantuck.eventdebugger
 
 import com.esotericsoftware.reflectasm.MethodAccess
-import com.google.common.base.Preconditions
 import com.google.common.collect.ArrayListMultimap
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
@@ -120,7 +119,7 @@ object EventRemapper {
 
     private fun returnCurrentValues(event: Event): Map<String, Any?> =
         subscribedMethodForEvent.get(event.javaClass).map {
-            it.first to it.third.invoke(event, it.second)?.let{any -> tryCloneAny(any)}
+            it.first to it.third.invoke(event, it.second)?.let { any -> tryCloneAny(any) }
         }.toMap()
 
     private fun returnDifferences(before: Map<String, Any?>, after: Map<String, Any?>): Map<String, Pair<Any?, Any?>> =
