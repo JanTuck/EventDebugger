@@ -13,12 +13,13 @@ repositories {
     mavenCentral()
     maven("https://hub.spigotmc.org/nexus/content/repositories/snapshots/")
     maven("https://oss.sonatype.org/content/repositories/snapshots")
+    maven ("https://jitpack.io")
     maven(url = "https://nexus.okkero.com/repository/maven-releases/")
 }
 
 dependencies {
     implementation(kotlin("stdlib"))
-    implementation("com.okkero.skedule", "skedule", "1.2.6")
+    implementation("com.github.okkero", "Skedule", "v1.2.6")
     implementation("com.esotericsoftware", "reflectasm", "1.11.9")
     implementation("org.slf4j", "slf4j-api",  "1.7.30")
     implementation("org.slf4j", "slf4j-simple",  "1.7.30")
