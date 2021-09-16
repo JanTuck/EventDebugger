@@ -57,9 +57,9 @@ object EventRemapper {
         val listeners = handlerList.registeredListeners
         listeners.forEach {
             val oldExecutor = executorField.get(it) as EventExecutor
-            val classPathForExecutor = oldExecutor.javaClass.name
+            val classPathForListener = it.javaClass.name
             val newExecutor = EventExecutor { listener1, event1 ->
-                executeAndCheckChanges({ event -> oldExecutor.execute(listener1, event) }, event1, it, classPathForExecutor)
+                executeAndCheckChanges({ event -> oldExecutor.execute(listener1, event) }, event1, it, classPathForListener)
             }
             executorField.set(it, newExecutor)
             EventDebugger.logger.info("> Listener for '${clazz.simpleName}' from '${it.plugin.name}' remapped.")
@@ -90,7 +90,7 @@ object EventRemapper {
         if (differences.isNotEmpty()) {
             logger.info("EventDebugger START")
             logger.info("-> Change in event '${event.eventName}'")
-            logger.info("-> Classpath for event '$classPath'")
+            logger.info("-> Classpath for listener '$classPath'")
             logger.info("-> Caused by '${registeredListener.plugin.name}'")
             differences.forEach { (t, u) -> logger.info("-> '$t' changed from '${u.first}' to '${u.second}'") }
             logger.info("EventDebugger END")
