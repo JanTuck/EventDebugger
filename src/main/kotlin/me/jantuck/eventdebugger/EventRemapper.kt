@@ -57,9 +57,14 @@ object EventRemapper {
         val listeners = handlerList.registeredListeners
         listeners.forEach {
             val oldExecutor = executorField.get(it) as EventExecutor
-            val classPathForListener = it.javaClass.name
+            val classPathForListener = it.listener.javaClass.name
             val newExecutor = EventExecutor { listener1, event1 ->
-                executeAndCheckChanges({ event -> oldExecutor.execute(listener1, event) }, event1, it, classPathForListener)
+                executeAndCheckChanges(
+                    { event -> oldExecutor.execute(listener1, event) },
+                    event1,
+                    it,
+                    classPathForListener
+                )
             }
             executorField.set(it, newExecutor)
             EventDebugger.logger.info("> Listener for '${clazz.simpleName}' from '${it.plugin.name}' remapped.")

@@ -1,21 +1,21 @@
 package me.jantuck.eventdebugger
 
 import com.esotericsoftware.reflectasm.MethodAccess
-import com.okkero.skedule.schedule
 import org.bukkit.event.Cancellable
 import org.bukkit.event.Event
 import org.bukkit.plugin.java.JavaPlugin
+import org.bukkit.scheduler.BukkitRunnable
 import org.reflections.Reflections
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import java.util.logging.Logger
 
 @Suppress("UNCHECKED_CAST")
 class EventDebugger : JavaPlugin() {
     companion object {
-        val logger: Logger = LoggerFactory.getLogger("EventDebugger")
+        lateinit var logger: Logger
     }
 
     override fun onLoad() {
+        EventDebugger.logger = this.logger
         logger.info(
             "If you see a warning after this message it is purely java being a bitch."
         )
@@ -24,11 +24,12 @@ class EventDebugger : JavaPlugin() {
 
     override fun onEnable() {
         saveDefaultConfig()
-        this.schedule {
-            waitFor(20)
-            remapExactSubscriptions()
-            tryRemapAllCancellable()
-        }
+        object : BukkitRunnable() {
+            override fun run() {
+                remapExactSubscriptions()
+                tryRemapAllCancellable()
+            }
+        }.runTaskLater(this, 20)
     }
 
     /**
@@ -49,12 +50,11 @@ class EventDebugger : JavaPlugin() {
     private fun tryRemapAllCancellable() {
         val section = config.getConfigurationSection("other") ?: return
         if (!section.getBoolean("listen-to-all-cancellable", false)) return
-        Reflections.log = EventDebugger.logger // Prefer own logger, so it looks nicer.
         val nameSpaces = section.getStringList("cancellable-namespaces")
         val ignored = section.getStringList("ignore-cancellable")
         val isCancelledMethod = listOf("isCancelled")
-        nameSpaces.forEach { namespace ->
-            val reflections = Reflections(namespace)
+        nameSpaces.forEach { nameSpace ->
+            val reflections = Reflections(nameSpace)
             reflections
                 .getSubTypesOf(Cancellable::class.java)
                 .filter {
@@ -65,5 +65,6 @@ class EventDebugger : JavaPlugin() {
                     EventRemapper.remapAndSubscribe(it as Class<out Event>, isCancelledMethod)
                 }
         }
+
     }
 }
