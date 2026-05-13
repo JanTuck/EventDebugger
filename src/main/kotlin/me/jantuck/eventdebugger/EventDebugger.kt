@@ -25,45 +25,79 @@ class EventDebugger : JavaPlugin() {
     override fun onEnable() {
         saveDefaultConfig()
         object : BukkitRunnable() {
+            private var subscriptionsLoaded = false
+
             override fun run() {
-                remapExactSubscriptions()
-                tryRemapAllCancellable()
+                if (!subscriptionsLoaded) {
+                    subscriptionsLoaded = true
+                    loadSubscriptions()
+                }
+                EventRemapper.remapSubscribedEvents()
             }
-        }.runTaskLater(this, 20)
+        }.runTaskTimer(this, 20, 20)
+    }
+
+    override fun onDisable() {
+        EventRemapper.restoreOriginalExecutors()
+    }
+
+    private fun loadSubscriptions() {
+        subscribeExact()
+        subscribeAllCancellable()
     }
 
     /**
-     * Tries to remap all the things listed in config
+     * Tries to subscribe all the things listed in config
      */
-    private fun remapExactSubscriptions() {
+    private fun subscribeExact() {
         val section = config.getConfigurationSection("exact") ?: return
         section.getKeys(false).forEach {
-            val clazz = Class.forName(section.getString("$it.class"))
-            val methods = section.getStringList("$it.methods")
-            EventRemapper.remapAndSubscribe(clazz as Class<out Event>, methods)
+            try {
+                val className = section.getString("$it.class")
+                if (className.isNullOrBlank()) {
+                    logger.warning("Skipping exact subscription '$it': missing class.")
+                    return@forEach
+                }
+                val methods = section.getStringList("$it.methods")
+                val clazz = Class.forName(className)
+                if (!Event::class.java.isAssignableFrom(clazz)) {
+                    logger.warning("Skipping exact subscription '$it': '$className' is not a Bukkit event.")
+                    return@forEach
+                }
+                EventRemapper.subscribe(clazz as Class<out Event>, methods)
+            } catch (e: ClassNotFoundException) {
+                logger.warning("Skipping exact subscription '$it': class not found (${e.message}).")
+            } catch (e: Exception) {
+                logger.warning("Skipping exact subscription '$it': ${e.message}")
+            }
         }
     }
 
     /**
-     * Tries to remap all events implementing Cancellable
+     * Tries to subscribe all events implementing Cancellable
      */
-    private fun tryRemapAllCancellable() {
+    private fun subscribeAllCancellable() {
         val section = config.getConfigurationSection("other") ?: return
         if (!section.getBoolean("listen-to-all-cancellable", false)) return
         val nameSpaces = section.getStringList("cancellable-namespaces")
         val ignored = section.getStringList("ignore-cancellable")
         val isCancelledMethod = listOf("isCancelled")
         nameSpaces.forEach { nameSpace ->
-            val reflections = Reflections(nameSpace)
-            reflections
-                .getSubTypesOf(Cancellable::class.java)
-                .filter {
-                    it.declaredFields.any { field -> field.type.name.endsWith("HandlerList") }
-                            && !ignored.contains(it.name)
-                }
-                .forEach {
-                    EventRemapper.remapAndSubscribe(it as Class<out Event>, isCancelledMethod)
-                }
+            try {
+                val reflections = Reflections(nameSpace)
+                reflections
+                    .getSubTypesOf(Cancellable::class.java)
+                    .filter {
+                        it.declaredFields.any { field -> field.type.name.endsWith("HandlerList") }
+                                && !ignored.contains(it.name)
+                                && Event::class.java.isAssignableFrom(it)
+                    }
+                    .forEach {
+                        EventRemapper.subscribe(it as Class<out Event>, isCancelledMethod)
+                    }
+            } catch (e: Exception) {
+                logger.warning("Could not scan cancellable namespace '$nameSpace': ${e.message}")
+            }
         }
 
     }

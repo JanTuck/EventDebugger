@@ -1,0 +1,6 @@
+name: EventDebugger
+version: ${version}
+main: me.jantuck.eventdebugger.EventDebugger
+api-version: "1.13"
+authors:
+  - JanTuck

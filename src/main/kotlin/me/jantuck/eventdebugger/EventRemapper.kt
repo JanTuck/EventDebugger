@@ -1,28 +1,44 @@
 package me.jantuck.eventdebugger
 
 import com.esotericsoftware.reflectasm.MethodAccess
-import com.google.common.collect.ArrayListMultimap
 import org.bukkit.event.Event
 import org.bukkit.event.HandlerList
 import org.bukkit.inventory.ItemStack
 import org.bukkit.plugin.EventExecutor
 import org.bukkit.plugin.RegisteredListener
 import java.lang.reflect.Method
+import java.util.Collections
+import java.util.WeakHashMap
 
 object EventRemapper {
     /*
     Executor field from RegisteredListener class, uses this to apply our executor on "top" of the normal one.
      */
     private val executorField =
-        RegisteredListener::class.java.getDeclaredField("executor").apply { this.isAccessible = true }
+        try {
+            RegisteredListener::class.java.getDeclaredField("executor").apply { this.isAccessible = true }
+        } catch (e: NoSuchFieldException) {
+            null
+        } catch (e: SecurityException) {
+            null
+        }
 
     // Our cache to hold our methodaccess, index of method and method name.
     private val subscribedMethodForEvent =
-        ArrayListMultimap.create<Class<out Event>, Triple<String, Int, MethodAccess>>()
+        mutableMapOf<Class<out Event>, LinkedHashMap<String, Pair<Int, MethodAccess>>>()
+
+    private val originalExecutors: MutableMap<RegisteredListener, EventExecutor> =
+        Collections.synchronizedMap(WeakHashMap<RegisteredListener, EventExecutor>())
+
+    private val failedValueReads = mutableSetOf<String>()
+
+    private var reportedMissingExecutorField = false
 
 
     private fun getHandlerListStaticMethod(clazz: Class<*>): Method? =
-        clazz.declaredMethods.find { it.name == "getHandlerList" && it.returnType == HandlerList::class.java /* Unnecessary check?*/ }
+        clazz.declaredMethods
+            .find { it.name == "getHandlerList" && it.returnType == HandlerList::class.java /* Unnecessary check?*/ }
+            ?.apply { this.isAccessible = true }
 
     /**
      * Traverses to try and find the HandlerList of an event.
@@ -33,9 +49,11 @@ object EventRemapper {
 
         // run super class first to ignore interfaces if it is present in super class.
         val superClass = clazz.superclass
-        val superClassMethod = getHandlerListStaticMethod(superClass)
-        if (superClassMethod != null)
-            return superClassMethod.invoke(null) as HandlerList
+        if (superClass != null) {
+            val superClassMethod = getHandlerListStaticMethod(superClass)
+            if (superClassMethod != null)
+                return superClassMethod.invoke(null) as HandlerList
+        }
 
         val interfaces = clazz.interfaces
         interfaces.forEach {
@@ -47,15 +65,56 @@ object EventRemapper {
     }
 
     /**
-     * Remaps shit
+     * Adds methods to watch for an event.
      */
-    fun remapAndSubscribe(clazz: Class<out Event>, subscribed: List<String>) {
+    fun subscribe(clazz: Class<out Event>, subscribed: List<String>) {
         if (subscribed.any { it.equals("callevent", true) }) // Meh
             throw java.lang.RuntimeException("You are not allowed to subscribe to method callEvent")
+
+        val methodAccess = MethodAccess.get(clazz)
+        val eventSubscriptions = subscribedMethodForEvent.getOrPut(clazz) { LinkedHashMap() }
+        subscribed
+            .filter { it.isNotBlank() }
+            .forEach {
+                if (!eventSubscriptions.containsKey(it)) {
+                    try {
+                        eventSubscriptions[it] = methodAccess.getIndex(it, 0) to methodAccess
+                    } catch (e: Exception) {
+                        EventDebugger.logger.warning("Skipping '${clazz.simpleName}.$it': zero-argument method not found or unsupported.")
+                    }
+                }
+            }
+    }
+
+    /**
+     * Remaps all current listeners for subscribed events. Safe to call repeatedly.
+     */
+    fun remapSubscribedEvents() {
+        val field = executorField
+        if (field == null) {
+            if (!reportedMissingExecutorField) {
+                EventDebugger.logger.warning("Could not access RegisteredListener.executor. EventDebugger cannot remap listeners on this server version.")
+                reportedMissingExecutorField = true
+            }
+            return
+        }
+        subscribedMethodForEvent.forEach { (clazz, methods) ->
+            if (methods.isNotEmpty()) {
+                try {
+                    remap(field, clazz, methods.keys.toList())
+                } catch (e: Exception) {
+                    EventDebugger.logger.warning("Could not remap '${clazz.name}': ${e.message}")
+                }
+            }
+        }
+    }
+
+    private fun remap(executorField: java.lang.reflect.Field, clazz: Class<out Event>, subscribed: List<String>) {
         val handlerList =
             tryGetHandlerList(clazz) ?: throw RuntimeException("Could not find HandlerList of ${clazz.simpleName}")
         val listeners = handlerList.registeredListeners
         listeners.forEach {
+            if (originalExecutors.containsKey(it)) return@forEach
             val oldExecutor = executorField.get(it) as EventExecutor
             val classPathForListener = it.listener.javaClass.name
             val newExecutor = EventExecutor { listener1, event1 ->
@@ -70,12 +129,16 @@ object EventRemapper {
             EventDebugger.logger.info("> Listener for '${clazz.simpleName}' from '${it.plugin.name}' remapped.")
             EventDebugger.logger.info("-> Subscribed to (${subscribed.joinToString(", ")})")
             EventDebugger.logger.info("--> Event priority '${it.priority}'")
+            originalExecutors[it] = oldExecutor
         }
-        // Cache MethodAccess and index for subscribed methods, of course also cache the method name.
-        val methodAccess = MethodAccess.get(clazz)
-        subscribed.forEach {
-            subscribedMethodForEvent.put(clazz, Triple(it, methodAccess.getIndex(it), methodAccess))
+    }
+
+    fun restoreOriginalExecutors() {
+        val field = executorField ?: return
+        originalExecutors.forEach { (listener, executor) ->
+            field.set(listener, executor)
         }
+        originalExecutors.clear()
     }
 
     /**
@@ -126,9 +189,20 @@ object EventRemapper {
     }
 
     private fun returnCurrentValues(event: Event): Map<String, Any?> =
-        subscribedMethodForEvent.get(event.javaClass).map {
-            it.first to it.third.invoke(event, it.second)?.let { any -> tryCloneAny(any) }
-        }.toMap()
+        subscribedMethodForEvent[event.javaClass]
+            ?.mapNotNull {
+                try {
+                    it.key to it.value.second.invoke(event, it.value.first)?.let { any -> tryCloneAny(any) }
+                } catch (e: Exception) {
+                    val key = "${event.javaClass.name}.${it.key}"
+                    if (failedValueReads.add(key)) {
+                        EventDebugger.logger.warning("Could not read '$key': ${e.message}")
+                    }
+                    null
+                }
+            }
+            ?.toMap()
+            ?: emptyMap()
 
     private fun returnDifferences(before: Map<String, Any?>, after: Map<String, Any?>): Map<String, Pair<Any?, Any?>> =
         before
