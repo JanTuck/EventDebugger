@@ -1,15 +1,55 @@
+# Whether EventDebugger should instrument listeners after startup.
+# This can also be changed at runtime with /eventdebugger on|off.
+enabled: true
+
+settings:
+  # Discover listeners registered after startup. Set to 0 for manual /eventdebugger refresh only.
+  # 200 ticks = 10 seconds. Refreshes are cheap because already-wrapped listeners are skipped.
+  refresh-interval-ticks: 200
+
+  # Leave empty to inspect every plugin. Names are case-insensitive.
+  include-plugins: []
+
+  # Useful for noisy or irrelevant plugins. EventDebugger itself is always excluded.
+  exclude-plugins: []
+
+  # Subscription keys toggled off through the UI are stored here.
+  disabled-subscriptions: []
+
+  # Log every listener when it is instrumented. Usually unnecessary and noisy.
+  log-remaps: false
+
+  # Long values are shortened to keep the console readable.
+  max-value-length: 200
+
+history:
+  # Keeps a bounded in-memory list of changed outcomes for the UI. Console logging still works
+  # when this is off. Enable it from config or by right-clicking History in the chest UI.
+  enabled: false
+  max-entries: 100
+
+ui:
+  enabled: true
+  # Paper servers with the dialog API get a modern dashboard. Spigot and older servers
+  # automatically use the chest UI. No Paper classes are linked into the plugin.
+  prefer-modern-dialogs: true
+
 other:
-  listen-to-all-cancellable: false # Off by default since this might provide too much information for simple tasks
+  # This can create a lot of output. Prefer exact subscriptions while investigating one event.
+  listen-to-all-cancellable: false
   cancellable-namespaces:
-    - "org.bukkit" # Contains all default events, got a plugin with events? Add their namespace.
-  ignore-cancellable: # This will only work if above is set to true
-    - "org.bukkit.event.player.AsyncPlayerChatEvent" # Example
-    - "org.bukkit.event.player.PlayerInteractEvent" # Example
-    - "org.bukkit.event.entity.EntityPickupItemEvent" # Example
+    - "org.bukkit"
+  ignore-cancellable:
+    - "org.bukkit.event.player.AsyncPlayerChatEvent"
+    - "org.bukkit.event.player.PlayerInteractEvent"
+    - "org.bukkit.event.entity.EntityPickupItemEvent"
+
+# Each entry needs a fully-qualified Bukkit event class and one or more zero-argument methods.
+# Add, remove, or rename entries freely; the entry key is only a friendly label.
 exact:
   PickupEvent:
-    class: "org.bukkit.event.entity.EntityPickupItemEvent" # Use the proper class
-    methods: # Only getters without parameters
+    class: "org.bukkit.event.entity.EntityPickupItemEvent"
+    methods:
       - "isCancelled"
   InteractEvent:
     class: "org.bukkit.event.player.PlayerInteractEvent"
