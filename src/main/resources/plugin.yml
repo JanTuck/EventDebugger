@@ -4,3 +4,14 @@ main: me.jantuck.eventdebugger.EventDebugger
 api-version: "1.13"
 authors:
   - JanTuck
+description: Shows exactly which plugin listener changes a Bukkit event.
+commands:
+  eventdebugger:
+    description: Inspect and control EventDebugger.
+    usage: /eventdebugger help
+    aliases: [edebug, ed]
+    permission: eventdebugger.admin
+permissions:
+  eventdebugger.admin:
+    description: Allows EventDebugger configuration and status commands.
+    default: op

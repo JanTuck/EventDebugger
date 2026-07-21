@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "me.jantuck"
-version = "1.1-SNAPSHOT"
+version = "2.0-SNAPSHOT"
 
 val pluginVersion = version
 
@@ -20,7 +20,7 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation("com.esotericsoftware:reflectasm:1.11.9")
     implementation("org.slf4j:slf4j-api:1.7.30")
-    implementation("org.slf4j:slf4j-simple:1.7.30")
+    implementation("org.slf4j:slf4j-nop:1.7.30")
     implementation("org.reflections:reflections:0.9.12")
     compileOnly("org.spigotmc:spigot-api:1.16.1-R0.1-SNAPSHOT")
 }
